@@ -11,7 +11,12 @@ app.get('/yelps', (req, res) => {
         .then(data => {
             let yelps = [];
             data.forEach(doc => {
-                yelps.push(doc.data());
+                yelps.push({
+                    yelpID: doc.id,
+                    body: doc.data().body,
+                    userHandle: doc.data().userHandle,
+                    createdAt: doc.data().createdAt
+                });
             });
             return res.json(yelps);
         })
