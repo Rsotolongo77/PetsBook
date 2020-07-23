@@ -14,13 +14,13 @@ const config = {
     measurementId: "G-L3XRC77DWG"
 };
 
-const app = require('express')();
-
 const firebase = require('firebase');
 firebase.initializeApp(config);
 
+const db = admin.firestore();
+
 app.get('/yelps', (req, res) => {
-    admin.firestore()
+    db
         .collection('Yelps')
         .orderBy('createdAt', 'desc')
         .get()
@@ -46,7 +46,7 @@ app.post('/yelp', (req, res) => {
         createdAt: new Date().toISOString()
     };
 
-    admin.firestore()
+    db
         .collection('Yelps')
         .add(newYelp)
         .then(doc => {
@@ -57,5 +57,39 @@ app.post('/yelp', (req, res) => {
             console.error(err);
         })
 });
+
+app.post('/signup', (req, res) => {
+    const newUser = {
+        email: req.body.email,
+        password: req.body.password,
+        confirmPassword: req.body.confirmPassword,
+        handle: req.body.handle
+    };
+
+    db.doc(`/users/${newUser}`).get()
+        .then(doc => {
+            if (doc.exists) {
+                return res.status(400).json({ handle: 'This handle is already taken' });
+            }
+            else {
+                return firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password);
+            }
+        })
+        .then(data => {
+            return data.user.getIdToken();
+        })
+        .then(token => {
+            return res.status(201).json({ token });
+        })
+        .catch(err => {
+            console.error(err);
+            if (err.code === 'auth/email-already-in-use') {
+                return res.status(400).json({ email: 'Email is already in use' });
+            }
+            else {
+                return res.status(500).json({ error: err.code });
+            }
+        })
+})
 
 exports.api = functions.https.onRequest(app);
