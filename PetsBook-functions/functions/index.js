@@ -6,7 +6,7 @@ admin.initializeApp();
 const express = require('express');
 const app = express();
 
-exports.getYelps = functions.https.onRequest((req, res) => {
+app.get('/yelps', (req, res) => {
     admin.firestore().collection('Yelps').get()
         .then(data => {
             let yelps = [];
@@ -18,10 +18,7 @@ exports.getYelps = functions.https.onRequest((req, res) => {
         .catch(err => console.error(err));
 });
 
-exports.createYelps = functions.https.onRequest((req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(400).json({ error: 'Method not allowed' });
-    }
+app.post('/yelp', (req, res) => {
     const newYelp = {
         body: req.body.body,
         userHandle: req.body.userHandle,
@@ -36,6 +33,8 @@ exports.createYelps = functions.https.onRequest((req, res) => {
         })
         .catch(err => {
             res.status(500).json({ error: 'something went wrong' });
-            console.srror(err);
+            console.error(err);
         })
 });
+
+exports.api = functions.https.onRequest(app);
